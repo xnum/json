@@ -106,12 +106,8 @@ output:
 		zkjson.Int("age", 27),
 		zkjson.Any("skill",
 			zkjson.Array("C/C++", "Golang", "PHP"),
-		), // Any() => `{..,"foo": "bar",..}`. Object() => {..,{"foo": "bar"},..}
+		), // Any() => `{..,"skill": ["C/C++", "Golang", "PHP"],..}`.
 		json.Any("no idea", json.Object()), 
-		zkjson.Object( // Embedded object is possible.
-			zkjson.String("FB", "xnumtw"),
-			zkjson.String("Twitter", ""),
-		).String(), // But remember to call String() to finish it.
 		zkjson.Attrs("education",
 			zkjson.String("NCTU", "MS"),
 			zkjson.String("NTCU", "BS"),
@@ -123,5 +119,5 @@ output:
 ```
 
 ```
-{"name": "xnum","age": 27,"skill": ["C/C++","Golang","PHP"],"no idea": {},{"FB": "xnumtw","Twitter": ""},"education": {"NCTU": "MS","NTCU": "BS"}}
+{"name": "xnum","age": 27,"skill": ["C/C++","Golang","PHP"],"no idea": {},"education": {"NCTU": "MS","NTCU": "BS"}}
 ```
