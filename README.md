@@ -47,6 +47,10 @@ I don't wanna write type, struct to deal with these dynamic json anymore.
 
 Lots of JSON lib focus on how to unmarshal or parse and nobody provides an easy to use approach. So there is the solution.
 
+# Install
+
+`go get -u -v github.com/xnum/zkjson`
+
 # Array
 
 ```go
