@@ -49,7 +49,7 @@ Lots of JSON lib focus on how to unmarshal or parse and nobody provides an easy 
 
 # Install
 
-`go get -u -v github.com/xnum/zkjson`
+`go get -u -v github.com/xnum/json`
 
 # Array
 
