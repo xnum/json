@@ -39,27 +39,27 @@ func String(key, val string) string {
 
 // Int generates member which has int as value.
 func Int(key string, val int) string {
-	return fmt.Sprintf(`"%s": %v`, key, val)
+	return fmt.Sprintf(`"%s": %d`, key, val)
 }
 
 // Int32 generates member which has int32 as value.
 func Int32(key string, val int32) string {
-	return fmt.Sprintf(`"%s": %v`, key, val)
+	return fmt.Sprintf(`"%s": %d`, key, val)
 }
 
 // Int64 generates member which has int64 as value.
 func Int64(key string, val int64) string {
-	return fmt.Sprintf(`"%s": %v`, key, val)
+	return fmt.Sprintf(`"%s": %d`, key, val)
 }
 
 // Float32 generates member which has Float32 as value.
 func Float32(key string, val float32) string {
-	return fmt.Sprintf(`"%s": %v`, key, val)
+	return fmt.Sprintf(`"%s": %f`, key, val)
 }
 
 // Float64 generates member which has float64 as value.
 func Float64(key string, val float64) string {
-	return fmt.Sprintf(`"%s": %v`, key, val)
+	return fmt.Sprintf(`"%s": %f`, key, val)
 }
 
 // Attrs accepts several strings and stores it.
@@ -108,7 +108,7 @@ func (a *ArrPayload) AppendAny(s ...fmt.Stringer) *ArrPayload {
 // AppendInt appends ints as its values.
 func (a *ArrPayload) AppendInt(arr ...int) *ArrPayload {
 	for _, v := range arr {
-		str := fmt.Sprintf("%+v", v)
+		str := fmt.Sprintf("%d", v)
 		a.eles = append(a.eles, str)
 	}
 	return a
