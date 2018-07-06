@@ -113,3 +113,12 @@ func (a *ArrPayload) AppendInt(arr ...int) *ArrPayload {
 	}
 	return a
 }
+
+// AppendFloat64 appends float64s as its values.
+func (a *ArrPayload) AppendFloat64(arr ...float64) *ArrPayload {
+	for _, v := range arr {
+		str := fmt.Sprintf("%f", v)
+		a.eles = append(a.eles, str)
+	}
+	return a
+}

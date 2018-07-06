@@ -125,3 +125,48 @@ output:
 ```
 {"name": "xnum","age": 27,"skill": ["C/C++","Golang","PHP"],"no idea": {},"education": {"NCTU": "MS","NTCU": "BS"}}
 ```
+
+# Abuse
+
+### modify after use
+
+```go
+	user := Object()
+	user.Append(String("user_id", "3345678"))
+	user.Append(String("name", "xnum"))
+	user.Append(String("country", "tw"))
+
+	location := Array()
+	location.AppendFloat64(124.012341, 23.998745)
+
+	event := Object(
+		String("action", "login"),
+		String("service", "auth"),
+	)
+
+	// Once you put an anything as parameter, it has been marshalled.
+	// Any modifications of object are not working.
+	payload := Object(Any("user", user), Any("loc", location), Any("event", event))
+	data := payload.String()
+
+	// When you modifies event after it used, it doesn't change anything.
+	event.Append(String("data", "gmail"))
+
+	s.Require().Equal(data, payload.String())
+```
+
+
+### put object directly
+
+Object must put key-value pair. Library cannot detect this behavior, but it's illegal.
+
+
+```go
+    obj := Object(
+        String("a", "a"),
+        Object().String(),
+    )
+```
+
+compiler passes. but result is `{"a": "a", {}}` which is invalid.
+
