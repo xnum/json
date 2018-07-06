@@ -1,4 +1,4 @@
-package zkjson
+package json
 
 import (
 	"fmt"
