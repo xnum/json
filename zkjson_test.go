@@ -1,7 +1,6 @@
 package json
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -201,14 +200,6 @@ func (s *testJsonSuite) TestComplexObject() {
 		s.Require().Equal(`[{"class":"1-A","name":"alice","recent_score":[98.5,99.7,100]},{"class":"1-B","name":"bob","recent_score":[18.5,99.3,12.3]}]`, string(res))
 	}
 
-}
-
-func (s *testJsonSuite) TestFail() {
-	{
-		obj := ObjPayload{}
-		res, err := json.Marshal(obj)
-		s.Require().Error(err, string(res))
-	}
 }
 
 func TestJson(t *testing.T) {
