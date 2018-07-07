@@ -55,11 +55,11 @@ Lots of JSON lib focus on how to unmarshal or parse and nobody provides an easy 
 
 ```go
 func main() {
-	arrName := zkjson.Array("Alice", "Bob") // Array only accepts string when creating.
-	arrName.AppendString("Kate", "John")
+	arrName := zkjson.Array("Alice", "Bob")
+	arrName.Append("Kate", "John")
 
 	arrScore := zkjson.Array()
-	arrScore.AppendInt(55, 66, 77, 88) // But you can append int.
+	arrScore.Append(55, 66, 77, 88)
 
 	students := zkjson.Object( // Using `Object` to combine it.
 	    zkjson.Any("name", arrName),
@@ -77,7 +77,7 @@ output:
 ```
 ["Alice","Bob","Kate","John"]
 [70,80,90,100]
-{"name": ["Alice","Bob","Kate","John"],"score": [70,80,90,100]}
+{"name":["Alice","Bob","Kate","John"],"score":[70,80,90,100]}
 ```
 
 # object/member
@@ -86,9 +86,9 @@ output:
 func main() {
 	// Object accepts key-value pair.
 	ezObj := zkjson.Object(
-	    zkjson.String("Url", "http://www.google.com"),
-	    zkjson.Int("TTL", 128),
-	    zkjson.Float64("Delay", 3.21),
+	    zkjson.Attr("Url", "http://www.google.com"),
+	    zkjson.Attr("TTL", 128),
+	    zkjson.Attr("Delay", 3.21),
 	)
 
 	fmt.Println(ezObj)
@@ -97,25 +97,24 @@ func main() {
 
 output:
 ```
-{"Url": "http://www.google.com","TTL": 128,"Delay": 3.21}
+{"Url":"http://www.google.com","TTL":128,"Delay":3.21}
 ```
 
 # complex struct
 
 ```go
-	func main() {
-	// Easy to consturct a complex structure.
+func main() {
 	res := zkjson.Object(
-		zkjson.String("name", "xnum"),
-		zkjson.Int("age", 27),
-		zkjson.Any("skill",
+		zkjson.Attr("name", "xnum"),
+		zkjson.Attr("age", 27),
+		zkjson.Attr("skill",
 			zkjson.Array("C/C++", "Golang", "PHP"),
-		), // Any() => `{..,"skill": ["C/C++", "Golang", "PHP"],..}`.
-		json.Any("no idea", json.Object()), 
-		zkjson.Attrs("education",
-			zkjson.String("NCTU", "MS"),
-			zkjson.String("NTCU", "BS"),
 		),
+		zkjson.Attr("no idea", zkjson.Object()), 
+		zkjson.Attr("education", zkjson.Object(
+			zkjson.Attr("NCTU", "MS"),
+			zkjson.Attr("NTCU", "BS"),
+		)),
 	)
 
 	fmt.Println(res)
@@ -125,48 +124,4 @@ output:
 ```
 {"name": "xnum","age": 27,"skill": ["C/C++","Golang","PHP"],"no idea": {},"education": {"NCTU": "MS","NTCU": "BS"}}
 ```
-
-# Abuse
-
-### modify after use
-
-```go
-	user := Object()
-	user.Append(String("user_id", "3345678"))
-	user.Append(String("name", "xnum"))
-	user.Append(String("country", "tw"))
-
-	location := Array()
-	location.AppendFloat64(124.012341, 23.998745)
-
-	event := Object(
-		String("action", "login"),
-		String("service", "auth"),
-	)
-
-	// Once you put an anything as parameter, it has been marshalled.
-	// Any modifications of object are not working.
-	payload := Object(Any("user", user), Any("loc", location), Any("event", event))
-	data := payload.String()
-
-	// When you modifies event after it used, it doesn't change anything.
-	event.Append(String("data", "gmail"))
-
-	s.Require().Equal(data, payload.String())
-```
-
-
-### put object directly
-
-Object must put key-value pair. Library cannot detect this behavior, but it's illegal.
-
-
-```go
-    obj := Object(
-        String("a", "a"),
-        Object().String(),
-    )
-```
-
-compiler passes. but result is `{"a": "a", {}}` which is invalid.
 

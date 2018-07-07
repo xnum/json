@@ -1,124 +1,96 @@
 package json
 
 import (
-	"fmt"
-	"strings"
+	"encoding/json"
 )
+
+// Rawer interface is to get internal data.
+type Rawer interface {
+	Raw() interface{}
+}
 
 // ObjPayload stores members.
 type ObjPayload struct {
-	attr []string
+	Attr map[string]interface{}
+}
+
+// Members stores key-value pair temporarily.
+type Member struct {
+	Key string
+	Val interface{}
 }
 
 // Object returns a new ObjPayload.
-func Object(arr ...string) *ObjPayload {
-	obj := &ObjPayload{attr: arr}
+func Object(arr ...Member) *ObjPayload {
+	obj := &ObjPayload{Attr: make(map[string]interface{})}
+	obj.Append(arr...)
 	return obj
 }
 
 // Append adds member to ObjPayload.
-func (p *ObjPayload) Append(arr ...string) *ObjPayload {
-	p.attr = append(p.attr, arr...)
+func (p *ObjPayload) Append(arr ...Member) *ObjPayload {
+	for _, e := range arr {
+		p.Attr[e.Key] = e.Val
+	}
 	return p
 }
 
-// String returns string represetation of ObjPayload.
-func (p *ObjPayload) String() string {
-	return fmt.Sprintf("{%s}", strings.Join(p.attr, ","))
+// Marshal returns its json string.
+func (p *ObjPayload) Marshal() ([]byte, error) {
+	return json.Marshal(p.Attr)
 }
 
-// Any accepts any type fits Stringer interface.
-func Any(key string, val fmt.Stringer) string {
-	return fmt.Sprintf(`"%s": %s`, key, val.String())
+// Raw returns its raw data.
+func (p *ObjPayload) Raw() interface{} {
+	return p.Attr
 }
 
-// String generates member which has stirng as value.
-func String(key, val string) string {
-	return fmt.Sprintf(`"%s": "%s"`, key, val)
-}
-
-// Int generates member which has int as value.
-func Int(key string, val int) string {
-	return fmt.Sprintf(`"%s": %d`, key, val)
-}
-
-// Int32 generates member which has int32 as value.
-func Int32(key string, val int32) string {
-	return fmt.Sprintf(`"%s": %d`, key, val)
-}
-
-// Int64 generates member which has int64 as value.
-func Int64(key string, val int64) string {
-	return fmt.Sprintf(`"%s": %d`, key, val)
-}
-
-// Float32 generates member which has Float32 as value.
-func Float32(key string, val float32) string {
-	return fmt.Sprintf(`"%s": %f`, key, val)
-}
-
-// Float64 generates member which has float64 as value.
-func Float64(key string, val float64) string {
-	return fmt.Sprintf(`"%s": %f`, key, val)
-}
-
-// Attrs accepts several strings and stores it.
-func Attrs(key string, arr ...string) string {
-	return fmt.Sprintf(`"%s": {%s}`, key, strings.Join(arr, ","))
+// Attr accepts key-value pair and return Member object.
+// it converts `key, val` to `key: val`
+func Attr(key string, val interface{}) Member {
+	if raw, ok := val.(Rawer); ok {
+		return Member{Key: key, Val: raw.Raw()}
+	}
+	if m, ok := val.(Member); ok {
+		return Member{Key: key, Val: Object(Attr(m.Key, m.Val)).Raw()}
+	}
+	return Member{Key: key, Val: val}
 }
 
 // ArrPayload stores values.
 type ArrPayload struct {
-	eles []string
+	eles []interface{}
 }
 
-// String returns string represetation of ArrPayload.
-func (a *ArrPayload) String() string {
-	return fmt.Sprintf("[%s]", strings.Join(a.eles, ","))
+// Marshal returns its json string.
+func (a *ArrPayload) Marshal() ([]byte, error) {
+	return json.Marshal(a.eles)
 }
 
-// Array stores values and returns a new ArrPayload.
-func Array(arr ...string) *ArrPayload {
+// Raw returns its raw data.
+func (a *ArrPayload) Raw() interface{} {
+	return a.eles
+}
+
+// Array stores values and returns a new ArrPayload. it converts to `[]`
+func Array(arr ...interface{}) *ArrPayload {
 	ret := &ArrPayload{}
-	for _, v := range arr {
-		s := fmt.Sprintf(`"%s"`, v)
-		ret.eles = append(ret.eles, s)
+	if len(arr) == 0 {
+		ret.eles = make([]interface{}, 0)
+	} else {
+		ret.Append(arr...)
 	}
 	return ret
 }
 
-// AppendString appends stirngs as its values.
-func (a *ArrPayload) AppendString(s ...string) *ArrPayload {
-	for _, v := range s {
-		str := fmt.Sprintf(`"%s"`, v)
-		a.eles = append(a.eles, str)
-	}
-	return a
-}
-
-// AppendAny appends Stringers as its values.
-func (a *ArrPayload) AppendAny(s ...fmt.Stringer) *ArrPayload {
-	for _, v := range s {
-		str := fmt.Sprintf("%s", v.String())
-		a.eles = append(a.eles, str)
-	}
-	return a
-}
-
-// AppendInt appends ints as its values.
-func (a *ArrPayload) AppendInt(arr ...int) *ArrPayload {
+// Append appends anything as its values.
+func (a *ArrPayload) Append(arr ...interface{}) *ArrPayload {
 	for _, v := range arr {
-		str := fmt.Sprintf("%d", v)
-		a.eles = append(a.eles, str)
-	}
-	return a
-}
-
-// AppendFloat64 appends float64s as its values.
-func (a *ArrPayload) AppendFloat64(arr ...float64) *ArrPayload {
-	for _, v := range arr {
-		str := fmt.Sprintf("%f", v)
-		a.eles = append(a.eles, str)
+		if raw, ok := v.(Rawer); ok {
+			a.eles = append(a.eles, raw.Raw())
+		} else {
+			a.eles = append(a.eles, v)
+		}
 	}
 	return a
 }

@@ -1,6 +1,7 @@
 package json
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -13,128 +14,201 @@ type testJsonSuite struct {
 func (s *testJsonSuite) TestObj() {
 	{
 		obj := Object()
-		s.Require().Equal("{}", obj.String())
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal("{}", string(res))
 	}
 
 	{
-		obj := Object(`"a": 1`)
-		s.Require().Equal(`{"a": 1}`, obj.String())
-	}
-
-	{
-		obj := Object(String("a", "1"))
-		s.Require().Equal(`{"a": "1"}`, obj.String())
+		obj := Object(Attr("a", "1"))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"a":"1"}`, string(res))
 	}
 
 	{
 		subObj := Object()
-		obj := Object(Any("sub", subObj))
-		s.Require().Equal(`{"sub": {}}`, obj.String())
+		obj := Object(Attr("sub", subObj))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"sub":{}}`, string(res))
 	}
 
 	{
-		obj := Object(Int("a", 1), Int("b", 2))
-		s.Require().Equal(`{"a": 1,"b": 2}`, obj.String())
+		obj := Object(Attr("a", 1), Attr("b", 2), Attr("time", nil))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"a":1,"b":2,"time":null}`, string(res))
 	}
 
 	{
-		obj := Object(Int64("a", 1), Float64("b", 0.4))
-		s.Require().Equal(`{"a": 1,"b": 0.400000}`, obj.String())
+		obj := Object(Attr("a", 1), Attr("b", 0.4), Attr("enable", false))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"a":1,"b":0.4,"enable":false}`, string(res))
 	}
 }
 
-func (s *testJsonSuite) TestObjAttrs() {
+func (s *testJsonSuite) TestObjAttr() {
 	{
-		obj := Object(Attrs("a"))
-		s.Require().Equal(`{"a": {}}`, obj.String())
+		obj := Object(Attr("a", Object()))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"a":{}}`, string(res))
 	}
 
 	{
-		obj := Object(Attrs("Q", Int("a", 1), Int("b", 2)))
-		s.Require().Equal(`{"Q": {"a": 1,"b": 2}}`, obj.String())
+		obj := Object(Attr("Q",
+			Object(
+				Attr("a", 1),
+				Attr("b", 2),
+			),
+		))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"Q":{"a":1,"b":2}}`, string(res))
 	}
 
 	{
-		obj := Object(Attrs("a", Attrs("b", Attrs("c", Attrs("d")))))
-		s.Require().Equal(`{"a": {"b": {"c": {"d": {}}}}}`, obj.String())
+		obj := Object(Attr("a", Attr("b", Attr("c", Attr("d", Object())))))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"a":{"b":{"c":{"d":{}}}}}`, string(res))
+	}
+
+	{
+		obj := Object(Attr("a", Array(Object(Attr("b", Array(1, Object(), "c"))))))
+		res, err := obj.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`{"a":[{"b":[1,{},"c"]}]}`, string(res))
 	}
 }
 
 func (s *testJsonSuite) TestObjAppend() {
 	{
-		obj := Object(String("a", "A"), Int("b", 99), String("c", "C"))
+		obj := Object(Attr("a", "A"), Attr("b", 99), Attr("c", "C"))
 		obj2 := Object()
-		obj2.Append(String("a", "A"))
-		obj2.Append(Int("b", 99))
-		obj2.Append(String("c", "C"))
+		obj2.Append(Attr("a", "A"))
+		obj2.Append(Attr("b", 99), Attr("c", "C"))
+		res, err := obj.Marshal()
+		res2, err2 := obj2.Marshal()
+		s.Require().NoError(err)
+		s.Require().NoError(err2)
 
-		s.Require().Equal(obj2.String(), obj.String())
+		s.Require().Equal(res, res2)
 	}
 }
 
 func (s *testJsonSuite) TestArray() {
 	{
 		arr := Array()
-		s.Require().Equal(`[]`, arr.String())
+		res, err := arr.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`[]`, string(res))
 	}
 
 	{
 		arr := Array("a", "b", "c")
-		s.Require().Equal(`["a","b","c"]`, arr.String())
+		res, err := arr.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`["a","b","c"]`, string(res))
 	}
 
 	{
 		arr := Array()
-		arr.AppendString("a", "b")
-		arr.AppendString("c")
-		s.Require().Equal(`["a","b","c"]`, arr.String())
+		arr.Append("a", "b")
+		arr.Append(nil)
+		arr.Append(false)
+		res, err := arr.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`["a","b",null,false]`, string(res))
 	}
 
 	{
 		arr := Array()
-		arr.AppendString("a", "b")
-		arr.AppendInt(3)
-		s.Require().Equal(`["a","b",3]`, arr.String())
+		arr.Append("a", "b")
+		arr.Append(3)
+		res, err := arr.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`["a","b",3]`, string(res))
 	}
 }
 
 func (s *testJsonSuite) TestArrayAppendAny() {
 	{
 		arr := Array()
-		arr.AppendAny(Object(), Object(String("a", "b")))
-		s.Require().Equal(`[{},{"a": "b"}]`, arr.String())
+		arr.Append(Object(), Object(Attr("a", "b")))
+		res, err := arr.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`[{},{"a":"b"}]`, string(res))
 	}
 
 	{
 		arr := Array()
-		arr.AppendAny(Object(), Array())
-		s.Require().Equal(`[{},[]]`, arr.String())
+		arr.Append(Object(), Array())
+		res, err := arr.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`[{},[]]`, string(res))
 	}
 }
 
 func (s *testJsonSuite) TestComplexObject() {
-	user := Object()
-	user.Append(String("user_id", "3345678"))
-	user.Append(String("name", "xnum"))
-	user.Append(String("country", "tw"))
+	{
+		user := Object()
+		user.Append(Attr("user_id", "3345678"))
+		user.Append(Attr("name", "xnum"))
+		user.Append(Attr("country", "tw"))
 
-	location := Array()
-	location.AppendFloat64(124.012341, 23.998745)
+		location := Array()
+		location.Append(124.012341, 23.998745)
 
-	event := Object(
-		String("action", "login"),
-		String("service", "auth"),
-	)
+		event := Object(
+			Attr("action", "login"),
+			Attr("service", "auth"),
+		)
 
-	// Once you put an anything as parameter, it has been marshalled.
-	// Any modifications of object are not working.
-	payload := Object(Any("user", user), Any("loc", location), Any("event", event))
-	data := payload.String()
+		payload := Object(
+			Attr("user", user),
+			Attr("loc", location),
+			Attr("event", event),
+		)
+		data, err := payload.Marshal()
+		s.Require().NoError(err)
 
-	// When you modifies event after it used, it doesn't change anything.
-	event.Append(String("data", "gmail"))
+		event.Append(Attr("source", "gmail"))
+		data2, err := payload.Marshal()
+		s.Require().NoError(err)
 
-	s.Require().Equal(data, payload.String())
+		s.Require().NotEqual(string(data), string(data2))
+	}
+
+	{
+		alice := Object(
+			Attr("name", "alice"),
+			Attr("class", "1-A"),
+			Attr("recent_score", []float64{98.5, 99.7, 100.0}),
+		)
+
+		bob := Object(
+			Attr("name", "bob"),
+			Attr("class", "1-B"),
+			Attr("recent_score", []float64{18.5, 99.3, 12.3}),
+		)
+
+		stus := Array(alice, bob)
+		res, err := stus.Marshal()
+		s.Require().NoError(err)
+		s.Require().Equal(`[{"class":"1-A","name":"alice","recent_score":[98.5,99.7,100]},{"class":"1-B","name":"bob","recent_score":[18.5,99.3,12.3]}]`, string(res))
+	}
+
+}
+
+func (s *testJsonSuite) TestFail() {
+	{
+		obj := ObjPayload{}
+		res, err := json.Marshal(obj)
+		s.Require().Error(err, string(res))
+	}
 }
 
 func TestJson(t *testing.T) {
