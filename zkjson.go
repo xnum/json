@@ -2,6 +2,7 @@ package json
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 // Rawer interface is to get internal data.
@@ -18,6 +19,10 @@ type ObjPayload struct {
 type Member struct {
 	Key string
 	Val interface{}
+}
+
+func (m Member) MarshalJSON() ([]byte, error) {
+	return nil, errors.New("invalid json format (directly marshalled Attr())")
 }
 
 // Object returns a new ObjPayload.

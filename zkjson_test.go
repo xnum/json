@@ -1,6 +1,7 @@
 package json
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -200,6 +201,24 @@ func (s *testJsonSuite) TestComplexObject() {
 		s.Require().Equal(`[{"class":"1-A","name":"alice","recent_score":[98.5,99.7,100]},{"class":"1-B","name":"bob","recent_score":[18.5,99.3,12.3]}]`, string(res))
 	}
 
+}
+
+func (s *testJsonSuite) TestIllegalCase() {
+	attr := Attr("name", "xnum")
+	_, err := json.Marshal(attr)
+	s.Require().Error(err)
+
+	// test passing address
+	_, err = json.Marshal(&attr)
+	s.Require().Error(err)
+
+	arr := Array(Attr("name", "xnum"))
+	_, err = arr.Marshal()
+	s.Require().Error(err)
+
+	obj := Object(Attr("arr", arr))
+	_, err = obj.Marshal()
+	s.Require().Error(err)
 }
 
 func TestJson(t *testing.T) {
