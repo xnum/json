@@ -21,6 +21,7 @@ type Member struct {
 	Val interface{}
 }
 
+// MarshalJSON return error absolutely to prevent it marshalled directly.
 func (m Member) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("invalid json format (directly marshalled Attr())")
 }
